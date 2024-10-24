@@ -1,0 +1,4 @@
+C:\Users\HR-PC\source\repos\OpenGL_Practice\x64\Release\Shaders\default.frag
+C:\Users\HR-PC\source\repos\OpenGL_Practice\x64\Release\Shaders\default.vert
+C:\Users\HR-PC\source\repos\OpenGL_Practice\x64\Release\Resources\container.jpg
+C:\Users\HR-PC\source\repos\OpenGL_Practice\x64\Release\Resources\wall.jpg

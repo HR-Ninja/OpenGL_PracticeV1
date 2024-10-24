@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>C:\Users\HR-PC\source\repos\OpenGL_Practice\x64\Release\OpenGL_Practice.exe</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>C:\Users\HR-PC\source\repos\OpenGL_Practice\Shaders\default.frag</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>C:\Users\HR-PC\source\repos\OpenGL_Practice\Shaders\default.vert</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>C:\Users\HR-PC\source\repos\OpenGL_Practice\Resources\container.jpg</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>C:\Users\HR-PC\source\repos\OpenGL_Practice\Resources\wall.jpg</FullPath>
+    </ContentFile>
+  </ContentFiles>
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>
