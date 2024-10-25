@@ -10,6 +10,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "Camera.hpp"
 #include "Window.hpp"
+#include "Shapes.hpp"
+#include "Util.hpp"
+#include "Settings.hpp"
+
 
 typedef uint32_t uint32;
 typedef uint64_t uint64;
@@ -24,117 +28,15 @@ void processInput(GLFWwindow* window);
 void fadeEffect(Shader& program);
 void Draw(uint32& VAO, Shader& shader, glm::vec3 position, glm::vec3 scale);
 
-
-// settings
-uint32 SCR_WIDTH = 1280;
-uint32 SCR_HEIGHT = 720;
-
-float deltaTime = 0.0f;	// Time between current frame and last frame
-float lastFrame = 0.0f; // Time of last frame
-
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
+float lastX = g_windowSettings.SCR_WIDTH / 2.0f;
+float lastY = g_windowSettings.SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
-
-
-struct Shapes
-{
-    float cube[108] = {
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-
-    -0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f, -0.5f,
-
-    -0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-    };
-
-    float cubeTex[180] = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-    };
-};
-
-
 
 int main()
 {
-   Window::Get().Init(SCR_WIDTH, SCR_HEIGHT, "OpenGL Practice");
+   Window::Get().Init(g_windowSettings.SCR_WIDTH, g_windowSettings.SCR_HEIGHT, "OpenGL Practice");
 
     glfwSetFramebufferSizeCallback(Window::Get().window, framebufferSizeCallback);
     glfwSetKeyCallback(Window::Get().window, keyCallBack);
@@ -152,16 +54,13 @@ int main()
     Shader cube("Shaders/light.vert", "Shaders/light.frag");
     Shader light("Shaders/light.vert", "Shaders/lamp.frag");
 
-
-    Shapes shape;
-
     // drawing stuff
     uint32 VBO, cubeVAO;
     glGenVertexArrays(1, &cubeVAO);
     glGenBuffers(1, &VBO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(shape.cube), shape.cube, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_shapes.cube), g_shapes.cube, GL_STATIC_DRAW);
 
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(cubeVAO);
@@ -189,10 +88,8 @@ int main()
     
     // render loop
     while (!glfwWindowShouldClose(Window::Get().window))
-    {
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+    {   
+        Util::CalculateDeltaTime();
 
         // input here - if needed
         processInput(Window::Get().window);
@@ -255,13 +152,13 @@ void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods
 void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
+        camera.ProcessKeyboard(FORWARD, Util::deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
+        camera.ProcessKeyboard(BACKWARD, Util::deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
+        camera.ProcessKeyboard(LEFT, Util::deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
+        camera.ProcessKeyboard(RIGHT, Util::deltaTime);
 }
 
 
@@ -271,11 +168,11 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
     // Avoid division by zero
     if (height == 0) height = 1;
 
-    SCR_WIDTH = width;
-    SCR_HEIGHT = height;
+    g_windowSettings.SCR_WIDTH = width;
+    g_windowSettings.SCR_HEIGHT = height;
 
     // Set the viewport to cover the new window size
-    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+    glViewport(0, 0, g_windowSettings.SCR_WIDTH, g_windowSettings.SCR_HEIGHT);
 }
 
 void fadeEffect(Shader &program)
@@ -312,7 +209,7 @@ void Draw(uint32& VAO, Shader& shader, glm::vec3 position, glm::vec3 scale)
     glm::mat4 view = camera.GetViewMatrix();
     shader.setMat4("view", view);
 
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)g_windowSettings.SCR_WIDTH / (float)g_windowSettings.SCR_HEIGHT, 0.1f, 100.0f);
     shader.setMat4("projection", projection);
 
     glBindVertexArray(VAO);
