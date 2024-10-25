@@ -34,6 +34,8 @@ float lastX = g_windowSettings.SCR_WIDTH / 2.0f;
 float lastY = g_windowSettings.SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
+glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+
 int main()
 {
    Window::Get().Init(g_windowSettings.SCR_WIDTH, g_windowSettings.SCR_HEIGHT, "OpenGL Practice");
@@ -59,14 +61,18 @@ int main()
     glGenVertexArrays(1, &cubeVAO);
     glGenBuffers(1, &VBO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_shapes.cube), g_shapes.cube, GL_STATIC_DRAW);
-
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(cubeVAO);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_shapes.cubeNormal), g_shapes.cubeNormal, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+   
 
     uint32 lampVAO;
     glGenVertexArrays(1, &lampVAO);
@@ -75,7 +81,7 @@ int main()
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
 
@@ -98,12 +104,17 @@ int main()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+        lightPos.x = 1.0f + sin(glfwGetTime()) * 2.0f;
+        lightPos.y = sin(glfwGetTime() / 2.0f) * 1.0f;
+
         
         Draw(cubeVAO, cube, glm::vec3(0.0f), glm::vec3(1.0f));
         cube.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
         cube.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        cube.setVec3("lightPos", lightPos);;
 
-        Draw(lampVAO, light, glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.2f));
+        Draw(lampVAO, light, lightPos, glm::vec3(0.2f));
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(Window::Get().window);
