@@ -1,7 +1,7 @@
 #include "glad.h"
 #include "glfw3.h"
-//#define STB_IMAGE_IMPLEMENTATION
-//#include "stb_image.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #include <iostream>
 #include <cmath>
 #include "Shader.hpp"
@@ -25,8 +25,8 @@ void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods
 void mouseCallBack(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
-void fadeEffect(Shader& program);
 void Draw(uint32& VAO, Shader& shader, glm::vec3 position, glm::vec3 scale);
+unsigned int loadTexture(char const* path);
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -34,7 +34,7 @@ float lastX = g_windowSettings.SCR_WIDTH / 2.0f;
 float lastY = g_windowSettings.SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-glm::vec3 lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+glm::vec3 lightPos = glm::vec3(1.2f, 0.0f, 2.0f);
 
 int main()
 {
@@ -54,7 +54,7 @@ int main()
     }
 
     Shader cube("Shaders/light.vert", "Shaders/light.frag");
-    Shader light("Shaders/light.vert", "Shaders/lamp.frag");
+    Shader light("Shaders/light_cube.vert", "Shaders/light_cube.frag");
 
     // drawing stuff
     uint32 VBO, cubeVAO;
@@ -65,13 +65,16 @@ int main()
     glBindVertexArray(cubeVAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_shapes.cubeNormal), g_shapes.cubeNormal, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_shapes.cubeTexDiff), g_shapes.cubeTexDiff, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
    
 
     uint32 lampVAO;
@@ -81,9 +84,13 @@ int main()
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    unsigned int diffuseMap = loadTexture("Resources/container2.png");
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, diffuseMap);
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -105,15 +112,29 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        lightPos.x = 1.0f + sin(glfwGetTime()) * 2.0f;
-        lightPos.y = sin(glfwGetTime() / 2.0f) * 1.0f;
+        lightPos.x = sin(glfwGetTime()) * 2.0f;
+        lightPos.z = cos(glfwGetTime()) * 2.0f;
+  
+        cube.use();
+        cube.setVec3("light.position", lightPos);
 
-        
+        // lighting
+        cube.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+        cube.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // darken diffuse light a bit
+        cube.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+        // material
+        cube.setInt("material.diffuse", 0);
+        cube.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        cube.setFloat("material.shininess", 64.0f);
+
+
+
         Draw(cubeVAO, cube, glm::vec3(0.0f), glm::vec3(1.0f));
-        cube.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-        cube.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        cube.setVec3("lightPos", lightPos);;
 
+
+
+        // lamp
         Draw(lampVAO, light, lightPos, glm::vec3(0.2f));
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -186,17 +207,6 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, g_windowSettings.SCR_WIDTH, g_windowSettings.SCR_HEIGHT);
 }
 
-void fadeEffect(Shader &program)
-{
-    float time = glfwGetTime();
-    float alphaValue = sin(time) / 2.0f + 0.5f;
-    int colorLocation = program.getUniformLocation("uAlpha");
-    if (colorLocation == -1) {
-        std::cout << "Failed to find uniform 'uAlpha'." << std::endl;
-    }
-    glUniform1f(colorLocation, alphaValue);
-}
-
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
@@ -226,4 +236,41 @@ void Draw(uint32& VAO, Shader& shader, glm::vec3 position, glm::vec3 scale)
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     
+}
+
+unsigned int loadTexture(char const* path)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum format = GL_RGB;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
 }

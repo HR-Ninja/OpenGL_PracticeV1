@@ -2301,7 +2301,8 @@
     </None>
     <None Include="Shaders\light.frag" />
     <None Include="Shaders\light.vert" />
-    <None Include="Shaders\lamp.frag" />
+    <None Include="Shaders\light_cube.frag" />
+    <None Include="Shaders\light_cube.vert" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\container.jpg">
