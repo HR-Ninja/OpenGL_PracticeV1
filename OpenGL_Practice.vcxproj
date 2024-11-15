@@ -925,6 +925,8 @@
     <None Include="Libaries\include\glm\vector_relational.inl" />
     <None Include="Libaries\include\glm\vector_ulp.inl" />
     <None Include="Libaries\include\glm\wrap.inl" />
+    <None Include="Shaders\direction_light1.frag" />
+    <None Include="Shaders\direction_light1.vert" />
     <None Include="Shaders\light_cube.frag" />
     <None Include="Shaders\light.frag" />
     <None Include="Shaders\light.vert" />

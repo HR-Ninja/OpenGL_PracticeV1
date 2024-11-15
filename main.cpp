@@ -55,6 +55,7 @@ int main()
 
     Shader cube("Shaders/light.vert", "Shaders/light.frag");
     Shader light("Shaders/light_cube.vert", "Shaders/light_cube.frag");
+    Shader directionLight1("Shaders/direction_light1.vert", "Shaders/direction_light1.frag");
 
     // drawing stuff
     uint32 VBO, cubeVAO;
@@ -62,11 +63,10 @@ int main()
     glGenBuffers(1, &VBO);
 
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(cubeVAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_shapes.cubeTexDiff), g_shapes.cubeTexDiff, GL_STATIC_DRAW);
 
+    glBindVertexArray(cubeVAO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -88,9 +88,13 @@ int main()
     glEnableVertexAttribArray(0);
 
     unsigned int diffuseMap = loadTexture("Resources/container2.png");
+    unsigned int specularMap = loadTexture("Resources/container2_specular.png");
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, diffuseMap);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, specularMap);
 
     // uncomment this call to draw in wireframe polygons.
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -98,11 +102,26 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+    glm::vec3 cubePositions[] = {
+        glm::vec3(0.0f,  0.0f,  0.0f),
+        glm::vec3(2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3(2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3(1.3f, -2.0f, -2.5f),
+        glm::vec3(1.5f,  2.0f, -2.5f),
+        glm::vec3(1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
+
     
     // render loop
     while (!glfwWindowShouldClose(Window::Get().window))
     {   
-        Util::CalculateDeltaTime();
+        Time::CalculateDeltaTime();
 
         // input here - if needed
         processInput(Window::Get().window);
@@ -114,19 +133,58 @@ int main()
 
         lightPos.x = sin(glfwGetTime()) * 2.0f;
         lightPos.z = cos(glfwGetTime()) * 2.0f;
-  
-        cube.use();
-        cube.setVec3("light.position", lightPos);
+        
+
+        directionLight1.use();
+        directionLight1.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
 
         // lighting
+        directionLight1.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+        directionLight1.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // darken diffuse light a bit
+        directionLight1.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+        // material
+        directionLight1.setInt("material.diffuse", 0);
+        directionLight1.setInt("material.specular", 1);
+        directionLight1.setFloat("material.shininess", 64.0f);
+
+        // view/projection transformations
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)g_windowSettings.SCR_WIDTH / (float)g_windowSettings.SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        directionLight1.setMat4("projection", projection);
+        directionLight1.setMat4("view", view);
+
+        // world transformation
+        glm::mat4 model = glm::mat4(1.0f);
+        directionLight1.setMat4("model", model);
+
+        glBindVertexArray(cubeVAO);
+
+        for (int i = 0; i < 10; i++)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            directionLight1.setMat4("model", model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+
+        /*
+        cube.use();
+        // lighting
+        cube.setVec3("light.position", lightPos);
         cube.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
         cube.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // darken diffuse light a bit
         cube.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
         // material
         cube.setInt("material.diffuse", 0);
-        cube.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        cube.setInt("material.specular", 1);
         cube.setFloat("material.shininess", 64.0f);
+
 
 
 
@@ -136,6 +194,8 @@ int main()
 
         // lamp
         Draw(lampVAO, light, lightPos, glm::vec3(0.2f));
+        */
+
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(Window::Get().window);
@@ -146,8 +206,8 @@ int main()
     glDeleteVertexArrays(1, &cubeVAO);
     glDeleteVertexArrays(1, &lampVAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteProgram(cube.ID);
-    glDeleteProgram(light.ID);
+   // glDeleteProgram(cube.ID);
+   // glDeleteProgram(light.ID);
 
     return 0;
 }
@@ -184,13 +244,13 @@ void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods
 void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, Util::deltaTime);
+        camera.ProcessKeyboard(FORWARD, Time::deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, Util::deltaTime);
+        camera.ProcessKeyboard(BACKWARD, Time::deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, Util::deltaTime);
+        camera.ProcessKeyboard(LEFT, Time::deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, Util::deltaTime);
+        camera.ProcessKeyboard(RIGHT, Time::deltaTime);
 }
 
 

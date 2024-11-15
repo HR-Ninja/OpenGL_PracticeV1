@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <unordered_map>
 
 typedef uint32_t uint32;
 typedef uint64_t uint64;
@@ -40,9 +41,11 @@ public:
     void setMat3(const std::string& name, const glm::mat3& mat) const;
     void setMat4(const std::string& name, const glm::mat4& mat) const;
     // ----------------------------------------------------------------
-    int getUniformLocation(const std::string& name) const;
+    GLint getLocation(const std::string& name) const;
 
 private: 
+    mutable std::unordered_map<std::string, GLint> m_locationCache;
+
     void checkCompileErrors(GLuint shader, std::string type);
 };
 
